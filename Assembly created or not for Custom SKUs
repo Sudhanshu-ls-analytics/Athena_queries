@@ -1,0 +1,15 @@
+--Here we are finding out SKUs for which assembly is yet to be made 
+
+
+select DISTINCT Order_created_sku, Order_raised_date, Assembly, Category, state, C_time, result_sku, skus, update
+from(
+select FP.sku_code as Order_created_sku, FOI.sku as Order_raised_sku , FO.order_created_at as Order_raised_date, FA.result_sku_code as Assembly, FP.product_category as Category, FO.order_state as state, FA.create_time as C_time, FA.result_sku_code as result_sku, FA.sku_code as skus,
+FA.update_ts_dms as update 
+from flat_order_items FOI
+left join flat_products FP
+on FOI.sku = FP.sku_code 
+left join flat_assembly_formula FA
+on FOI.sku = FA.result_sku_code
+left join  flat_orders FO
+on FOI.id_order = FO.id_order where FP.sku_code like '%CMCM%' and FP.product_category like 'Custom Modular')
+where Assembly iS null and state <> 'Cancelled' ;
