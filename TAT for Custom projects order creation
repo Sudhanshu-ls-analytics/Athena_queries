@@ -1,0 +1,26 @@
+--This query is used to extract the SLA data for custom team, imos and designer from the time of parent order creation.
+
+
+select C.project_id, C.order_created_sku, C.order_raised_date, C.assembly_creation_time, D.order_created_at, C.order_id 
+from
+(
+select DISTINCT project_id,Order_created_sku, Order_raised_date,assembly_creation_time, order_id
+from
+(
+select FP.sku_code as Order_created_sku, FOI.sku as Order_raised_sku , FO.order_created_at as Order_raised_date, FA.result_sku_code as Assembly, FP.product_category as Category, FO.order_state as state, FA.create_time as assembly_creation_time, FA.result_sku_code as result_sku,   FA.sku_code as skus, FO.project_id as project_id,FA.update_ts_dms as update, FO.id_order as order_id 
+from flat_order_items FOI
+left join flat_products FP
+on FOI.sku = FP.sku_code 
+left join flat_assembly_formula FA
+on FOI.sku = FA.result_sku_code
+left join  flat_orders FO
+on FOI.id_order = FO.id_order
+where FP.sku_code like '%CMCM%' and FP.product_category like 'Custom Modular'AND FA.result_sku_code is not null and FO.order_state <> 'Cancelled') 
+) AS C
+LEFT JOIN 
+(select order_created_at, id_order, project_id, parent_order
+FROM flat_orders  where parent_order is not null 
+AND parent_order in 
+(select A.id_order from flat_orders A, flat_orders B WHERE A.id_order = B.parent_order)
+)AS D
+ON C.order_id = D.parent_order
